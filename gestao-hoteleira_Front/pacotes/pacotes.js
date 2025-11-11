@@ -23,11 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (quantidadeDeDiarias === "") {
             alert("Quantidade de diárias é obrigatória!");
             return;
-        } else if (valorDaDiaria === "") {
-            alert("Valor da diária é obrigatório!");
-            return;
-        }
-
+        } 
         // Cria objeto
         let pacote = {
             id: id ? parseInt(id) : getMaiorIdLista() + 1,
