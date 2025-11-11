@@ -1,138 +1,114 @@
-// Script relacionado ao módulo de pessoas
-
 // Array principal armazenado no navegador
-if (localStorage.getItem('listaPacote') == null) {
-    listaPacote = [];
-    localStorage.setItem('listaPacote', JSON.stringify(listaPacote));
-} else {
-    listaPacote = JSON.parse(localStorage.getItem('listaPacote'));
-}
+let listaPacote = JSON.parse(localStorage.getItem('listaPacote')) || [];
+localStorage.setItem('listaPacote', JSON.stringify(listaPacote));
 
-// Aguarda o carregamento do HTML para ser executado
 document.addEventListener('DOMContentLoaded', function () {
-
-    // Chamadas
     listar();
 
-    // Salva cadastro e edição
     document.querySelector('#bt-salvar').addEventListener('click', function () {
         // Pega os dados dos campos do formulário
-        let nomeDoPacote = document.querySelector('#campo-nome-do-pacote').value;
+        let id = document.querySelector('#campo-id').value;
+        let nomeDoPacote = document.querySelector('#campo-nome-pacote').value.trim();
         let acomodacao = document.querySelector('#campo-acomodacao').value;
-        let QuantidadeDeDiarias = document.querySelector('#campo-Quantidade_de_Diarias').value;
-        let valorDaDiaria = document.querySelector('#campo-valor_da_diaria').value;
+        let quantidadeDeDiarias = document.querySelector('#campo-quantidade-diarias').value;
+        let valorDaDiaria = document.querySelector('#campo-valor-diaria').value;
 
         // Validações de campos
-        if (acomodacao == "") {
-            alert("acomodacão é um campo obrigatório!");
+        if (nomeDoPacote === "") {
+            alert("Nome do pacote é obrigatório!");
             return;
-        } else if (QuantidadeDeDiarias == "") {
-            alert("quantidade de diárias é um campo obrigatório!");
+        } else if (acomodacao === "") {
+            alert("Acomodação é obrigatória!");
             return;
-        } else if (valorDaDiaria == "") {
-            alert("valor da diária é um campo obrigatório!");
+        } else if (quantidadeDeDiarias === "") {
+            alert("Quantidade de diárias é obrigatória!");
+            return;
+        } else if (valorDaDiaria === "") {
+            alert("Valor da diária é obrigatório!");
             return;
         }
 
         // Cria objeto
         let pacote = {
-            id: (id != "") ? id : getMaiorIdLista() + 1,
-            nomeDoPacote: nomeDoPacote,
-            acomodacao: acomodacao,
-            QuantidadeDeDiarias: QuantidadeDeDiarias,
-            valorDaDiaria: valorDaDiaria,
+            id: id ? parseInt(id) : getMaiorIdLista() + 1,
+            nomeDoPacote,
+            acomodacao,
+            quantidadeDeDiarias,
+            valorDaDiaria
         };
 
-        // Altera ou insere uma posição no array principal
-        if (id != "") {
-            listapacote[indice] = pacote;
+        // Altera ou adiciona
+        if (id) {
+            let indice = getIndiceListaPorId(id);
+            listaPacote[indice] = pacote;
         } else {
-            listapacote.push(pacote);
+            listaPacote.push(pacote);
         }
 
-        // Armazena a lista atualizada no navegador
+        // Atualiza localStorage
         localStorage.setItem('listaPacote', JSON.stringify(listaPacote));
 
-        // Reseta o formulário e recarrega a tabela de listagem
-        this.blur();
-        resetarForm()
-
-        // Recarrega listagem
-        carregar("Salvo com sucesso!");
+        resetarForm();
         listar();
+        alert("Pacote salvo com sucesso!");
     });
 
-    // Cancelamento de edição
     document.querySelector('#bt-cancelar').addEventListener('click', function () {
         resetarForm();
     });
-
 });
 
-// Funções
-
+// Listagem
 function listar() {
-    document.querySelector('table tbody').innerHTML = "";
+    const tbody = document.querySelector('table tbody');
+    tbody.innerHTML = "";
     document.querySelector('#total-registros').textContent = listaPacote.length;
-    listaPessoas.forEach(function (objeto) {
-        // Cria string html com os dados da lista
-        let htmlAcoes = "";
-        htmlAcoes += '<button class="bt-tabela bt-editar" title="Editar"><i class="ph ph-pencil"></i></button>';
-        htmlAcoes += '<button class="bt-tabela bt-excluir" title="Excluir"><i class="ph ph-trash"></i></button>';
 
-        let htmlColunas = "";
-        htmlColunas += "<td>" + objeto.nomeDoPacote + "</td>";
-        htmlColunas += "<td>" + objeto.acomodacao + "</td>";
-        htmlColunas += "<td>" + objeto.QuantidadeDeDiarias + "</td>";
-        htmlColunas += "<td>" + objeto.valorDaDiaria + "</td>";
-        htmlColunas += "<td>" + htmlAcoes + "</td>";
+    listaPacote.forEach(function (objeto) {
+        let htmlAcoes = `
+            <button class="bt-tabela bt-editar" data-id="${objeto.id}" title="Editar"><i class="ph ph-pencil"></i></button>
+            <button class="bt-tabela bt-excluir" data-id="${objeto.id}" title="Excluir"><i class="ph ph-trash"></i></button>
+        `;
 
-        // Adiciona a linha ao corpo da tabela
-        let htmlLinha = '<tr id="linha-' + objeto.id + '">' + htmlColunas + '</tr>';
-        document.querySelector('table tbody').innerHTML += htmlLinha;
+        let htmlLinha = `
+            <tr id="linha-${objeto.id}">
+                <td>${objeto.id}</td>
+                <td>${objeto.nomeDoPacote}</td>
+                <td>${objeto.acomodacao}</td>
+                <td>${objeto.quantidadeDeDiarias}</td>
+                <td>${objeto.valorDaDiaria}</td>
+                <td>${htmlAcoes}</td>
+            </tr>
+        `;
+
+        tbody.innerHTML += htmlLinha;
     });
 
     eventosListagem();
-    carregar();
 }
 
+// Eventos de editar/excluir
 function eventosListagem() {
-    // Ação de editar objeto
     document.querySelectorAll('.bt-editar').forEach(function (botao) {
         botao.addEventListener('click', function () {
-            // Pega os dados do objeto que será alterado
-            let linha = botao.parentNode.parentNode;
-            let colunas = linha.getElementsByTagName('td');
-            let nomeDoPacote = colunas[1].textContent;
-            let acomodacao = colunas[2].textContent;
-            let QuantidadeDeDiarias = colunas[3].textContent;
-            let valorDaDiaria = colunas[4].textContent;
+            let id = botao.dataset.id;
+            let pacote = listaPacote.find(p => p.id == id);
 
-            // Popula os campos do formulário
-            document.querySelector('#campo-nome-do-pacote').value = nomeDoPacote;
-            document.querySelector('#campo-acomodacao').value = acomodacao;
-            document.querySelector('#campo-quantidade-de-diarias').value = QuantidadeDeDiarias;
-            document.querySelector('#campo-valor-da-diaria').value = valorDaDiaria;
-
-            // Exibe botão de cancelar edição
-            document.querySelector('#bt-cancelar').style.display = 'flex';
+            document.querySelector('#campo-id').value = pacote.id;
+            document.querySelector('#campo-nome-pacote').value = pacote.nomeDoPacote;
+            document.querySelector('#campo-acomodacao').value = pacote.acomodacao;
+            document.querySelector('#campo-quantidade-diarias').value = pacote.quantidadeDeDiarias;
+            document.querySelector('#campo-valor-diaria').value = pacote.valorDaDiaria;
         });
     });
 
-    // Ação de excluir objeto
     document.querySelectorAll('.bt-excluir').forEach(function (botao) {
         botao.addEventListener('click', function () {
-            if (confirm("Deseja realmente excluir?")) {
-                // Remove objeto da lista
-                let linha = botao.parentNode.parentNode;
-                let id = linha.id.replace('linha-', '');
+            if (confirm("Deseja realmente excluir este pacote?")) {
+                let id = botao.dataset.id;
                 let indice = getIndiceListaPorId(id);
                 listaPacote.splice(indice, 1);
-
-                // Armazena a lista atualizada no navegador
                 localStorage.setItem('listaPacote', JSON.stringify(listaPacote));
-
-                // Recarrega a listagem
                 listar();
             }
         });
@@ -140,28 +116,21 @@ function eventosListagem() {
 }
 
 function getIndiceListaPorId(id) {
-    indiceProcurado = null;
-    listaPessoas.forEach(function (objeto, indice) {
-        if (id == objeto.id) {
-            indiceProcurado = indice;
-        }
-    });
-    return indiceProcurado;
+    return listaPacote.findIndex(p => p.id == id);
 }
 
 function getMaiorIdLista() {
-    if (listaPessoas.length > 0) {
-        return parseInt(listaPessoas[listaPessoas.length - 1].id);
+    if (listaPacote.length > 0) {
+        return Math.max(...listaPacote.map(p => p.id));
     } else {
         return 0;
     }
 }
 
 function resetarForm() {
-    document.querySelector('#bt-cancelar').style.display = 'none';
     document.querySelector('#campo-id').value = "";
-    document.querySelector('#campo-nome-do-pacote').value = "";
+    document.querySelector('#campo-nome-pacote').value = "";
     document.querySelector('#campo-acomodacao').value = "";
-    document.querySelector('#campo-quantidade-de-diarias').value = "";
-    document.querySelector('#campo-valor-da-diaria').value = "";
+    document.querySelector('#campo-quantidade-diarias').value = "";
+    document.querySelector('#campo-valor-diaria').value = "";
 }
