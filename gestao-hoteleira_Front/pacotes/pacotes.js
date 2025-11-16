@@ -62,9 +62,10 @@ function listar() {
 
     listaPacote.forEach(function (objeto) {
         let htmlAcoes = `
-            <button class="bt-tabela bt-editar" data-id="${objeto.id}" title="Editar"><i class="ph ph-pencil"></i></button>
-            <button class="bt-tabela bt-excluir" data-id="${objeto.id}" title="Excluir"><i class="ph ph-trash"></i></button>
+        <button type="button" class="bt-tabela bt-editar" data-id="${objeto.id}" title="Editar"><i class="ph ph-pencil"></i></button>
+        <button type="button" class="bt-tabela bt-excluir" data-id="${objeto.id}" title="Excluir"><i class="ph ph-trash"></i></button>
         `;
+
 
         let htmlLinha = `
             <tr id="linha-${objeto.id}">
